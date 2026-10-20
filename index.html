@@ -1,0 +1,1415 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>بازی آموزشی محافظان قلعه - نبرد نئونی حماسی</title>
+    <style>
+        :root {
+            --primary: #00f2fe;
+            --primary-glow: rgba(0, 242, 254, 0.5);
+            --secondary: #4facfe;
+            --accent: #ff007f;
+            --accent-glow: rgba(255, 0, 127, 0.5);
+            --danger: #ff4757;
+            --success: #2ed573;
+            --dark-bg: #0a0e17;
+            --card-bg: rgba(20, 30, 48, 0.85);
+        }
+        
+        body {
+            margin: 0; padding: 0;
+            font-family: 'Segoe UI', Tahoma, sans-serif;
+            background: var(--dark-bg);
+            color: #fff;
+            display: flex; justify-content: center; align-items: center;
+            height: 100vh; overflow: hidden; user-select: none;
+        }
+
+        /* ----- Screens & Modals (Embossed & 3D Glassmorphism) ----- */
+        .screen, #quiz-modal, #end-message, #tutorial-modal {
+            background: linear-gradient(145deg, rgba(25, 35, 55, 0.95), rgba(10, 15, 25, 0.98));
+            border: 2px solid rgba(79, 172, 254, 0.3);
+            border-top: 2px solid rgba(0, 242, 254, 0.8);
+            border-left: 2px solid rgba(0, 242, 254, 0.8);
+            backdrop-filter: blur(25px);
+            padding: 20px 20px; border-radius: 20px;
+            box-shadow: 10px 15px 40px rgba(0,0,0,0.8), -5px -5px 20px rgba(255,255,255,0.03), inset 0 0 20px rgba(0, 242, 254, 0.15);
+            text-align: center; max-width: 450px; width: 95%;
+            z-index: 100; position: absolute;
+            max-height: 98vh; overflow-y: auto;
+            animation: fadeIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-sizing: border-box;
+        }
+        #quiz-modal, #end-message, #tutorial-modal {
+            top: 50%; left: 50%; transform: translate(-50%, -50%);
+            z-index: 200; display: none; min-width: 320px;
+        }
+
+        @keyframes fadeIn { 
+            from { opacity: 0; transform: scale(0.9) translate(0, 20px); } 
+            to { opacity: 1; transform: scale(1) translate(0, 0); } 
+        }
+        
+        .screen::-webkit-scrollbar, #quiz-modal::-webkit-scrollbar, #tutorial-modal::-webkit-scrollbar { width: 5px; }
+        .screen::-webkit-scrollbar-thumb, #quiz-modal::-webkit-scrollbar-thumb, #tutorial-modal::-webkit-scrollbar-thumb { background: var(--secondary); border-radius: 10px; }
+        
+        /* ----- Authorship & Logos ----- */
+        .creator-container {
+            display: flex; justify-content: center; align-items: center; gap: 15px; margin-bottom: 10px;
+        }
+        .creator-avatar {
+            width: 70px; height: 70px; border-radius: 50%; object-fit: cover;
+            border: 3px solid var(--primary); box-shadow: 0 0 15px var(--primary-glow);
+        }
+        .creator-info {
+            font-size: 0.85rem; color: #cbd5e1; line-height: 1.5; background: rgba(255,255,255,0.05);
+            padding: 8px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); margin-bottom: 12px;
+            box-shadow: inset 0 2px 5px rgba(0,0,0,0.3);
+        }
+
+        .screen h1 { 
+            font-size: 1.8rem; margin-top: 0; margin-bottom: 10px;
+            background: linear-gradient(45deg, var(--primary), var(--accent));
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 20px var(--primary-glow);
+            line-height: 1.2; font-weight: 900;
+        }
+        .welcome-text { color: #cbd5e1; line-height: 1.4; margin-bottom: 15px; font-size: 0.9rem; }
+        
+        .input-group input {
+            width: 85%; padding: 12px; background: rgba(0,0,0,0.6); border: 2px solid #4a5568; 
+            border-radius: 12px; color: #fff; font-size: 14px; outline: none; text-align: center; 
+            font-family: inherit; margin-bottom: 12px; transition: all 0.3s;
+            box-sizing: border-box; box-shadow: inset 0 3px 10px rgba(0,0,0,0.5);
+        }
+        .input-group input:focus { border-color: var(--primary); box-shadow: inset 0 3px 10px rgba(0,0,0,0.5), 0 0 15px var(--primary-glow); }
+        
+        /* ----- 3D Embossed Buttons ----- */
+        .btn, .level-btn, .diff-btn {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: #000; border: none; padding: 12px 20px; border-radius: 12px;
+            font-size: 15px; font-weight: bold; cursor: pointer; transition: all 0.15s ease;
+            margin-top: 5px; font-family: inherit; position: relative;
+            box-shadow: 0 6px 0 rgba(0,0,0,0.5), 0 10px 15px rgba(0,0,0,0.4);
+            display: block; width: 100%; box-sizing: border-box;
+        }
+        .btn:hover:not(:disabled), .level-btn:hover, .diff-btn:hover { 
+            transform: translateY(-2px); 
+            box-shadow: 0 8px 0 rgba(0,0,0,0.5), 0 15px 20px rgba(0, 242, 254, 0.4); 
+        }
+        .btn:active:not(:disabled), .level-btn:active, .diff-btn:active { 
+            transform: translateY(6px); 
+            box-shadow: 0 0px 0 rgba(0,0,0,0.5), 0 2px 5px rgba(0,0,0,0.4); 
+        }
+        .btn:disabled { background: #4a5568; color: #94a3b8; cursor: not-allowed; box-shadow: none; opacity: 0.5;}
+        
+        .level-btn { margin: 10px 0; font-size: 1rem; color: white; text-shadow: 1px 1px 3px rgba(0,0,0,0.8); }
+        .diff-btn { margin: 12px 0; font-size: 1.05rem; color: white; text-shadow: 1px 1px 3px rgba(0,0,0,0.8); }
+
+        /* ----- Promo Box Effects ----- */
+        .link-box.promo-pulse {
+            display: block; margin-top: 15px; padding: 12px; border-radius: 12px;
+            background: linear-gradient(90deg, rgba(255,0,127,0.25), rgba(0,242,254,0.25)); 
+            border: 2px solid var(--primary); color: #fff;
+            font-weight: 900; text-decoration: none; transition: all 0.3s ease;
+            font-size: 0.95rem; line-height: 1.5;
+            animation: neonPulse 1.5s infinite alternate;
+        }
+        .link-box.promo-pulse:hover { 
+            background: linear-gradient(90deg, var(--accent), var(--primary)); 
+            color: #fff; transform: translateY(-3px) scale(1.02); 
+            animation: none; box-shadow: 0 10px 30px var(--primary-glow);
+        }
+        
+        @keyframes neonPulse {
+            from { box-shadow: 0 0 10px var(--primary-glow), inset 0 0 10px var(--accent-glow); transform: scale(1); border-color: var(--primary);}
+            to { box-shadow: 0 0 25px var(--primary), inset 0 0 20px var(--accent); transform: scale(1.02); border-color: var(--accent);}
+        }
+
+        #level-screen, #difficulty-screen { display: none; }
+
+        /* ----- Game UI ----- */
+        #game-screen { display: none; width: 100vw; height: 100vh; position: relative; background: #020617; }
+        canvas { display: block; width: 100%; height: 100%; cursor: crosshair; }
+        
+        #game-ui {
+            position: absolute; top: 4px; left: 4px; right: 4px; padding: 4px 6px;
+            background: linear-gradient(145deg, rgba(20, 30, 50, 0.9), rgba(10, 15, 30, 0.95)); 
+            border: 1px solid rgba(255,255,255,0.1);
+            border-bottom: 2px solid var(--secondary); 
+            border-radius: 10px; backdrop-filter: blur(10px); color: white; 
+            display: flex; justify-content: space-between; align-items: center;
+            flex-wrap: wrap; z-index: 110; font-size: 0.75rem; font-weight: bold; gap: 4px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.6);
+        }
+        .status-panel { display: flex; gap: 4px; align-items: center; flex-wrap: wrap; justify-content: center;}
+        .status-box { background: rgba(0,0,0,0.4); padding: 3px 6px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.05); box-shadow: inset 0 2px 5px rgba(0,0,0,0.5); }
+        
+        .exit-btn {
+            background: linear-gradient(135deg, #e74c3c, #c0392b); color: #fff; border: none;
+            padding: 4px 8px; border-radius: 6px; font-size: 0.75rem; font-weight: bold;
+            cursor: pointer; transition: all 0.15s ease; 
+            box-shadow: 0 3px 0 rgba(0,0,0,0.5), 0 4px 8px rgba(231,76,60,0.4);
+            font-family: inherit; text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+        }
+        .exit-btn:hover { transform: translateY(-2px); box-shadow: 0 5px 0 rgba(0,0,0,0.5), 0 6px 12px rgba(231,76,60,0.6); }
+        .exit-btn:active { transform: translateY(3px); box-shadow: 0 0 0 rgba(0,0,0,0.5), 0 2px 4px rgba(231,76,60,0.4); }
+
+        /* ----- Sidebar (Centered Vertically on the Left) ----- */
+        #sidebar {
+            position: absolute; 
+            left: 4px; 
+            top: 50%; 
+            transform: translateY(-45%);
+            width: 50px; height: max-content;
+            max-height: calc(100vh - 120px);
+            background: linear-gradient(145deg, rgba(20, 30, 50, 0.9), rgba(10, 15, 30, 0.95)); 
+            padding: 6px 2px; 
+            border-radius: 10px; 
+            display: flex; flex-direction: column; justify-content: flex-start; gap: 3px; z-index: 105;
+            border: 1px solid rgba(255,255,255,0.1); 
+            border-right: 2px solid var(--secondary); 
+            backdrop-filter: blur(10px); overflow-y: auto;
+            box-shadow: 4px 5px 20px rgba(0,0,0,0.6);
+        }
+        #sidebar::-webkit-scrollbar { width: 0; }
+        
+        .weapon-card {
+            background: rgba(0,0,0,0.3); border-radius: 6px; padding: 3px 1px;
+            text-align: center; cursor: pointer; transition: all 0.2s; border: 2px solid transparent; 
+            flex-shrink: 0; color: #cbd5e1; box-shadow: inset 0 2px 4px rgba(0,0,0,0.4);
+        }
+        .weapon-card:hover { transform: scale(1.05); background: rgba(255,255,255,0.1); color: #fff; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+        .weapon-card.selected { border-color: var(--primary); background: rgba(0, 242, 254, 0.15); box-shadow: inset 0 0 8px var(--primary-glow), 0 0 12px var(--primary-glow); }
+        .w-icon { font-size: 15px; margin-bottom: 1px; text-shadow: 0 2px 5px rgba(0,0,0,0.5); }
+        .w-title { font-size: 8px; font-weight: bold; }
+        .w-cost { font-size: 8px; color: #fff; font-weight: bold; background: linear-gradient(45deg, #f1c40f, #e67e22); border-radius: 3px; margin-top: 1px; padding: 0; box-shadow: 0 2px 4px rgba(0,0,0,0.5);}
+        
+        #coin-btn {
+            background: linear-gradient(135deg, var(--accent) 0%, #bd005f 100%); color: #fff;
+            border: 1px solid var(--accent); border-radius: 10px; width: 45px; height: 45px;
+            font-size: 8px; font-weight: bold; cursor: pointer; margin: 4px auto 0 auto;
+            box-shadow: 0 3px 0 rgba(0,0,0,0.5), 0 0 12px var(--accent-glow); font-family: inherit; transition: 0.2s;
+            padding: 1px; flex-shrink: 0; position: sticky; bottom: 0; z-index: 20;
+            animation: pulse 1.8s infinite; text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
+        }
+        #coin-btn:active { transform: translateY(3px); box-shadow: 0 0 0 rgba(0,0,0,0.5), 0 0 4px var(--accent-glow); animation: none; }
+        @keyframes pulse {
+            0% { box-shadow: 0 3px 0 rgba(0,0,0,0.5), 0 0 0 0 rgba(255, 0, 127, 0.8); transform: scale(1); }
+            50% { box-shadow: 0 3px 0 rgba(0,0,0,0.5), 0 0 15px 6px rgba(255, 0, 127, 0); transform: scale(1.05); }
+            100% { box-shadow: 0 3px 0 rgba(0,0,0,0.5), 0 0 0 0 rgba(255, 0, 127, 0); transform: scale(1); }
+        }
+        
+        /* ----- D-Pad (Positioned Higher) ----- */
+        #d-pad { 
+            position: absolute; 
+            right: 15px; 
+            bottom: 120px; 
+            width: 110px; height: 110px; 
+            z-index: 10; 
+            transform: scale(0.95); transform-origin: bottom right;
+        }
+        .dir-btn {
+            position: absolute; width: 38px; height: 38px; background: rgba(15, 23, 42, 0.8);
+            border: 1px solid rgba(255,255,255,0.2); border-radius: 10px; color: white;
+            font-size: 18px; display: flex; justify-content: center; align-items: center;
+            cursor: pointer; backdrop-filter: blur(5px); box-shadow: 0 4px 15px rgba(0,0,0,0.6);
+            transition: all 0.1s;
+        }
+        .dir-btn:active { background: var(--primary); color: #000; transform: scale(0.9); box-shadow: 0 0 15px var(--primary); }
+        #btn-up { top: 0; left: 36px; } #btn-down { bottom: 0; left: 36px; }
+        #btn-left { top: 36px; left: 0; } #btn-right { top: 36px; right: 0; }
+        
+        /* ----- Modals specific tweaks ----- */
+        #tutorial-overlay {
+            display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(2, 6, 23, 0.85); z-index: 140; backdrop-filter: blur(5px);
+        }
+        #question-text, #tut-title { color: #fff; margin-bottom: 20px; font-size: 1.15rem; font-weight: bold; line-height: 1.5; text-shadow: 0 2px 5px rgba(0,0,0,0.8);}
+        #tut-desc { font-size: 1rem; color: #cbd5e1; line-height: 1.6; margin-bottom: 20px; text-shadow: 0 1px 3px rgba(0,0,0,0.5); }
+        
+        .option-btn {
+            display: block; width: 100%; margin: 12px 0; padding: 14px; 
+            background: linear-gradient(145deg, rgba(255,255,255,0.1), rgba(0,0,0,0.2));
+            border: 1px solid rgba(255,255,255,0.1); border-left: 4px solid var(--primary); border-radius: 12px; 
+            cursor: pointer; font-family: inherit; font-size: 1rem; color: #fff; font-weight: bold; 
+            transition: all 0.15s ease; text-align: right; box-sizing: border-box;
+            box-shadow: 0 5px 0 rgba(0,0,0,0.6), 0 8px 15px rgba(0,0,0,0.3);
+        }
+        .option-btn:hover { 
+            background: rgba(0, 242, 254, 0.15); border-color: var(--primary); 
+            transform: translateY(-2px) translateX(-5px);
+            box-shadow: 0 7px 0 rgba(0,0,0,0.6), 0 12px 20px rgba(0,242,254,0.3); 
+        }
+        .option-btn:active {
+            transform: translateY(5px) translateX(-5px);
+            box-shadow: 0 0px 0 rgba(0,0,0,0.6), 0 2px 5px rgba(0,0,0,0.3);
+        }
+        
+        #toast-alert {
+            position: absolute; top: 15%; left: 50%; transform: translate(-50%, -50%);
+            background: rgba(15, 23, 42, 0.95); color: white; padding: 12px 24px; border-radius: 12px;
+            font-size: 1rem; font-weight: bold; text-align: center; box-shadow: 0 5px 25px rgba(0, 242, 254, 0.3);
+            z-index: 160; width: 85%; max-width: 400px; opacity: 0; pointer-events: none; transition: opacity 0.3s ease; border: 1px solid var(--accent);
+        }
+
+        /* Responsive Fixes */
+        @media (max-height: 600px) {
+            .screen { padding: 15px 15px; }
+            .screen h1 { font-size: 1.5rem; margin-bottom: 8px;}
+            .welcome-text { font-size: 0.85rem; margin-bottom: 10px;}
+            .btn { padding: 10px 15px; font-size: 14px;}
+            .link-box { margin-top: 10px; padding: 10px; }
+            #sidebar { top: 50%; max-height: calc(100vh - 80px); }
+            #d-pad { bottom: 100px; right: 10px; transform: scale(0.8); transform-origin: bottom right; }
+        }
+        @media (max-width: 380px) {
+            .status-box { font-size: 0.7rem; padding: 2px 4px; }
+            #game-ui { left: 4px; }
+        }
+    </style>
+</head>
+<body>
+    <div id="start-screen" class="screen">
+        <div class="creator-container">
+            <img class="creator-avatar" src="https://my.uupload.ir/dl/dxvWVZXo" alt="لوگو">
+            <img class="creator-avatar" src="https://my.uupload.ir/dl/5L085bXd" alt="تهیه‌کننده">
+        </div>
+        <div class="creator-info">
+            تهیه‌کننده: محمد صادق رخ‌افروز؛ آموزگار پایه پنجم دبستان شهید عصاری شهرستان طبس
+        </div>
+        <h1>محافظان قلعه 🏰</h1>
+        <p class="welcome-text">دشمنان جان‌سخت‌تر شده‌اند! نیروهای مدافع آماده اعزام به میدان نبرد هستند.<br><span style="color:var(--danger); font-size:1.05rem; font-weight: bold; text-shadow: 0 0 10px rgba(255,71,87,0.5);">قلعه رو با موشک هایی که داری شخمش بزن!</span></p>
+        <div style="display: flex; justify-content: center; align-items: center; gap: 10px; margin-bottom: 12px;">
+            <label for="music-upload" class="btn" style="padding: 10px 15px; font-size: 13px; margin: 0; background: linear-gradient(135deg, #ff9f43, #ff6b6b); color:#000;">🎵 بارگذاری موسیقی اختصاصی</label>
+            <input type="file" id="music-upload" accept="audio/*" style="display: none;" onchange="loadMusic(event)">
+            <button id="mute-btn" onclick="toggleMute()" style="background: none; border: none; font-size: 26px; cursor: pointer; text-shadow: 0 0 15px rgba(255,255,255,0.5); padding:0; margin:0; transition: transform 0.2s;">🔊</button>
+            <audio id="bg-music" loop></audio>
+        </div>
+        <div class="input-group">
+            <input type="text" id="player-name" placeholder="نام فرمانده..." required>
+        </div>
+        <button class="btn" onclick="showLevelScreen()">انتخاب جبهه نبرد 🗺️</button>
+        
+        <a href="https://eitaa.com/joinchat/2951021951C718cb20119" target="_blank" class="link-box promo-pulse">🚀 برای دیدن بازی های بیشتر و ترفند های حرفه ای هوش مصنوعی اینجا کلیک کنید 🚀</a>
+    </div>
+
+    <div id="level-screen" class="screen">
+        <h1>انتخاب جبهه نبرد</h1>
+        <button id="btn-lvl-1" class="btn level-btn" style="background: linear-gradient(135deg, #10ac84, #1dd1a1);" onclick="selectDifficulty(1)">مرحله ۱: جنگل سبز 🌲</button>
+        <button id="btn-lvl-2" class="btn level-btn" style="background: linear-gradient(135deg, #f5cd79, #f7d794);" onclick="selectDifficulty(2)">مرحله ۲: صحرای سوزان 🌵</button>
+        <button id="btn-lvl-3" class="btn level-btn" style="background: linear-gradient(135deg, #54a0ff, #00d2d3);" onclick="selectDifficulty(3)">مرحله ۳: کوهستان یخی ❄️</button>
+        <button id="btn-lvl-4" class="btn level-btn" style="background: linear-gradient(135deg, #a55eea, #8854d0);" onclick="selectDifficulty(4)">مرحله ۴: مرداب سمی 🦠</button>
+        <button id="btn-lvl-5" class="btn level-btn" style="background: linear-gradient(135deg, #ee5253, #ff6b6b);" onclick="selectDifficulty(5)">مرحله ۵: آتشفشان خروشان 🌋</button>
+        <button class="btn" style="background: linear-gradient(135deg, #718093, #2f3640); color: white; margin-top: 15px;" onclick="backToStart()">بازگشت به صفحه اصلی</button>
+    </div>
+
+    <div id="difficulty-screen" class="screen">
+        <h1>انتخاب سطح سختی نبرد</h1>
+        <p class="welcome-text">میزان قدرت و تعداد هجوم نیروهای دشمن را تعیین کنید:</p>
+        <button class="diff-btn" style="background: linear-gradient(135deg, #2ed573, #1abc9c);" onclick="startLevelWithDifficulty('easy')">⭐ سطح آسان (تعداد کمتر دشمن)</button>
+        <button class="diff-btn" style="background: linear-gradient(135deg, #f1c40f, #f39c12);" onclick="startLevelWithDifficulty('medium')">⭐⭐ سطح متوسط (استاندارد)</button>
+        <button class="diff-btn" style="background: linear-gradient(135deg, #e74c3c, #c0392b);" onclick="startLevelWithDifficulty('hard')">⭐⭐⭐ سطح سخت (هجوم سنگین)</button>
+        <button class="btn" style="background: linear-gradient(135deg, #718093, #2f3640); color: white; margin-top: 15px;" onclick="backToLevels()">بازگشت به جبهه‌ها</button>
+    </div>
+
+    <div id="game-screen">
+        <div id="game-ui">
+            <div class="status-panel">
+                <button class="exit-btn" onclick="exitToMenu()">↩️ برگشت به مراحل</button>
+                <div class="status-box" id="ui-name" style="border-left: 3px solid var(--primary); margin-right: 3px;">فرمانده: </div>
+                <div class="status-box" style="color: var(--primary);"><span id="ui-level">1</span> (<span id="ui-diff-text">متوسط</span>)</div>
+            </div>
+            <div class="status-panel">
+                <div class="status-box" style="color: #f1c40f;">سکه: <span id="ui-coins">30</span> 🪙</div>
+                <div class="status-box" id="ui-time-container">زمان: <span id="ui-time">00:30</span> ⏳</div>
+                <div class="status-box" style="color: var(--danger);">جان: <span id="ui-hp">3000</span> ❤️</div>
+            </div>
+        </div>
+
+        <div id="sidebar">
+            <div class="weapon-card" onclick="selectWeapon('tank')"><div class="w-icon">🚜</div><div class="w-title">تانک</div><div class="w-cost">۷ 🪙</div></div>
+            <div class="weapon-card" onclick="selectWeapon('barracks')"><div class="w-icon">🪖</div><div class="w-title">سرباز</div><div class="w-cost">۴ 🪙</div></div>
+            <div class="weapon-card" onclick="selectWeapon('plane')"><div class="w-icon">✈️</div><div class="w-title">پرواز</div><div class="w-cost">۱۲ 🪙</div></div>
+            <div class="weapon-card" onclick="selectWeapon('missile')"><div class="w-icon">🚀</div><div class="w-title">موشک</div><div class="w-cost">۲۰ 🪙</div></div>
+            <hr style="width: 80%; border-color: rgba(255,255,255,0.1); margin: 3px auto;">
+            <div class="weapon-card" onclick="buyDefender('swordsman')" style="background: rgba(52, 152, 219, 0.1); border-color: rgba(52, 152, 219, 0.3);"><div class="w-icon">🤺</div><div class="w-title">شمشیرزن</div><div class="w-cost">۸ 🪙</div></div>
+            <div class="weapon-card" onclick="buyDefender('archer')" style="background: rgba(39, 174, 96, 0.1); border-color: rgba(39, 174, 96, 0.3);"><div class="w-icon">🏹</div><div class="w-title">کماندار</div><div class="w-cost">۱۲ 🪙</div></div>
+            <div class="weapon-card" onclick="buyDefender('paladin')" style="background: rgba(241, 196, 15, 0.1); border-color: rgba(241, 196, 15, 0.3);"><div class="w-icon">🛡️</div><div class="w-title">شوالیه</div><div class="w-cost">۲۰ 🪙</div></div>
+            <hr style="width: 80%; border-color: rgba(255,255,255,0.1); margin: 3px auto;">
+            <div class="weapon-card" onclick="selectWeapon('shovel')" style="background: rgba(231, 76, 60, 0.15); border-color: rgba(231, 76, 60, 0.3);"><div class="w-icon">⛏️</div><div class="w-title">حذف</div><div class="w-cost" style="background:none; color:var(--danger); box-shadow:none;">رایگان</div></div>
+            <button id="coin-btn" onclick="showQuiz()">+۵ سکه<br>آزمون</button>
+        </div>
+
+        <div id="d-pad">
+            <div class="dir-btn" id="btn-up">⬆️</div><div class="dir-btn" id="btn-left">⬅️</div><div class="dir-btn" id="btn-right">➡️</div><div class="dir-btn" id="btn-down">⬇️</div>
+        </div>
+
+        <div id="toast-alert"></div>
+        <canvas id="gameCanvas"></canvas>
+
+        <div id="quiz-modal">
+            <h2 id="question-text"></h2>
+            <div id="options-container"></div>
+        </div>
+
+        <div id="tutorial-overlay"></div>
+        <div id="tutorial-modal">
+            <h2 id="tut-title"></h2>
+            <p id="tut-desc"></p>
+            <button class="btn" onclick="nextTutorialStep()" id="tut-btn">بعدی ➡️</button>
+        </div>
+
+        <div id="end-message">
+            <h1 id="end-title" style="font-size: 2.5rem; margin-bottom: 15px; text-shadow: 0 0 25px rgba(255,255,255,0.4);"></h1>
+            <p id="end-desc" style="font-size: 1.1rem; color: #cbd5e1; margin-bottom: 25px; line-height: 1.6;"></p>
+            <button class="btn" onclick="returnToMenu()">ادامه / بازگشت به منو 🔄</button>
+        </div>
+    </div>
+
+    <script>
+        // --- Music & Audio System ---
+        const bgMusic = document.getElementById('bg-music');
+        const muteBtn = document.getElementById('mute-btn');
+        let isMuted = false;
+
+        const defaultMenuMusic = "https://dl.sevilmusics.com/cdn/music/srvrg/Instrumental%20Epic%20Music%20001%20%5BSevilMusic%5D.mp3";
+        const defaultGameMusic = "https://dl.sevilmusics.com/cdn/music/srvrg/Instrumental%20Epic%20Music%20005%20%5BSevilMusic%5D.mp3";
+        let hasCustomMusic = false;
+
+        bgMusic.src = defaultMenuMusic;
+
+        function loadMusic(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const url = URL.createObjectURL(file);
+                bgMusic.src = url;
+                hasCustomMusic = true;
+                bgMusic.play().catch(e => console.log("مرورگر اجازه پخش خودکار نداد."));
+            }
+        }
+        function toggleMute() {
+            isMuted = !isMuted;
+            bgMusic.muted = isMuted;
+            muteBtn.innerText = isMuted ? '🔇' : '🔊';
+        }
+
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        let lastSoundTimes = { shoot: 0, hit: 0, correct: 0, sword: 0, ui: 0, bow: 0, explode: 0 };
+        
+        const externalAudioFiles = {
+            missile: 'https://dl4.fara-download.ir/audio/sound_effect/gun/missile/Missile%20Sound.mp3',
+            tank: 'https://s17.uupload.ir/files/notebooklm/tank.mp3',
+            soldier: 'https://s17.uupload.ir/files/notebooklm/soldier.mp3',
+            plane: 'https://s17.uupload.ir/files/notebooklm/airplane.mp3',
+            castle: 'https://s25.uupload.ir/files/notebooklm/shotgan.mp3',
+            swordsmanFight: 'https://sedatoseda.com/wp-content/uploads/Sword-Draw-Sound-Effect.mp3',
+            archerShoot: 'https://s11.uupload.ir/files/notebooklm/AudioCutter_Bow-1.mp3',
+            castleExplode: 'https://sedatoseda.com/wp-content/uploads/explosion-02.mp3'
+        };
+        const preloadedSounds = {};
+        for (let key in externalAudioFiles) {
+            preloadedSounds[key] = new Audio(externalAudioFiles[key]);
+        }
+
+        function playSoundEx(type) {
+            if(isMuted) return;
+            if(preloadedSounds[type]) {
+                const s = preloadedSounds[type].cloneNode();
+                s.volume = 0.7;
+                s.play().catch(e => {});
+            } else {
+                playSound(type);
+            }
+        }
+
+        function playSound(type) {
+            if(audioCtx.state === 'suspended') audioCtx.resume();
+            if(isMuted) return;
+            const now = Date.now();
+            const throttleTime = type === 'shoot' ? 80 : (type === 'hit' ? 80 : (type === 'sword' ? 100 : 0));
+            if(now - lastSoundTimes[type] < throttleTime) return;
+            lastSoundTimes[type] = now;
+
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain); gain.connect(audioCtx.destination);
+
+            if(type === 'shoot') {
+                osc.type = 'square'; osc.frequency.setValueAtTime(600, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.15);
+                gain.gain.setValueAtTime(0.04, audioCtx.currentTime); gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.15);
+                osc.start(); osc.stop(audioCtx.currentTime + 0.15);
+            } else if(type === 'sword') {
+                osc.type = 'triangle'; osc.frequency.setValueAtTime(800, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(200, audioCtx.currentTime + 0.1);
+                gain.gain.setValueAtTime(0.06, audioCtx.currentTime); gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.1);
+                osc.start(); osc.stop(audioCtx.currentTime + 0.1);
+            } else if(type === 'hit') {
+                osc.type = 'sawtooth'; osc.frequency.setValueAtTime(120, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(40, audioCtx.currentTime + 0.15);
+                gain.gain.setValueAtTime(0.05, audioCtx.currentTime); gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.15);
+                osc.start(); osc.stop(audioCtx.currentTime + 0.15);
+            } else if(type === 'correct') {
+                osc.type = 'sine'; osc.frequency.setValueAtTime(400, audioCtx.currentTime);
+                osc.frequency.setValueAtTime(600, audioCtx.currentTime + 0.1); osc.frequency.setValueAtTime(800, audioCtx.currentTime + 0.2);
+                gain.gain.setValueAtTime(0.1, audioCtx.currentTime); gain.gain.linearRampToValueAtTime(0.001, audioCtx.currentTime + 0.4);
+                osc.start(); osc.stop(audioCtx.currentTime + 0.4);
+            } else if(type === 'ui') {
+                osc.type = 'sine'; osc.frequency.setValueAtTime(500, audioCtx.currentTime);
+                gain.gain.setValueAtTime(0.05, audioCtx.currentTime); gain.gain.linearRampToValueAtTime(0.001, audioCtx.currentTime + 0.1);
+                osc.start(); osc.stop(audioCtx.currentTime + 0.1);
+            }
+        }
+
+        // --- Vocabulary Data System ---
+        const vocabData = [
+            { q: "قرنیه بخش جلوی چشم است که نور از آن عبور می‌کند.", a: "درست", options: ["درست", "نادرست"] },
+            { q: "عنبیه دریچه‌ای است که دقیقاً در پشت قرنیه قرار دارد و نور از آنجا وارد می‌شود.", a: "نادرست", options: ["درست", "نادرست"] },
+            { q: "پرده‌ی گوش در ابتدای مجرای شنوایی قرار است.", a: "نادرست", options: ["درست", "نادرست"] },
+            { q: "(عملکردی) اگر علی وارد یک اتاق تاریک شود، مردمک چشم او گشادتر می‌شود تا بتواند در نور کم بهتر ببیند.", a: "درست", options: ["درست", "نادرست"] },
+            { q: "لرزش پرده‌ی گوش مستقیماً به بخش حلزونی منتقل می‌شود تا ما صدا را بشنویم.", a: "نادرست", options: ["درست", "نادرست"] },
+            { q: "افراد نزدیک‌بین برای رفع مشکل خود باید از عدسی محدب استفاده کنند.", a: "نادرست", options: ["درست", "نادرست"] },
+            { q: "(عملکردی) سارا برای محافظت از چشم‌هایش هنگام مطالعه، کتاب را در فاصله‌ی ۳۰ سانتی‌متری از صورتش نگه می‌دارد. این کار او کاملاً صحیح است.", a: "درست", options: ["درست", "نادرست"] },
+            { q: "ماده‌ی چرب درون گوش، پرده‌ی گوش را خشک می‌کند تا امواج صدا بهتر دریافت شوند.", a: "نادرست", options: ["درست", "نادرست"] },
+            { q: "(عملکردی) وقتی توپی به سمت شما پرتاب می‌شود، ماهیچه‌های دست و پای شما قبل از اینکه چشم پیام را به مغز بفرستد، واکنش نشان می‌دهند.", a: "نادرست", options: ["درست", "نادرست"] },
+            { q: "بیشتر قسمت‌های چشم درون استخوان سر قرار گرفته است تا به خوبی از آن محافظت شود.", a: "درست", options: ["درست", "نادرست"] },
+            { q: "(عملکردی) پدربزرگ مریم کم‌شنوا است. سمعک او صداها را دریافت کرده و به گوش خارجی می‌فرستد.", a: "نادرست", options: ["درست", "نادرست"] },
+            { q: "چشم به شکل کروی است.", a: "درست", options: ["درست", "نادرست"] },
+            { q: "عصب بینایی پیام‌های بینایی را از عدسی دریافت کرده و به مغز می‌برد.", a: "نادرست", options: ["درست", "نادرست"] },
+            { q: "(عملکردی) اگر رضا نتواند تخته‌سیاه را از ته کلاس به‌خوبی ببیند اما کتابش را راحت بخواند، چشم‌پزشک برای او عینکی با عدسی مقعر تجویز می‌کند.", a: "نادرست", options: ["درست", "نادرست"] },
+            { q: "(عملکردی) هنگام رفتن به رختخواب، استفاده از گوشی در تاریکی هیچ آسیبی به چشم نمی‌رساند، زیرا نور صفحه گوشی برای دیدن کافی است.", a: "نادرست", options: ["درست", "نادرست"] },
+            
+            { q: "تصویر اجسام در کدام قسمت از چشم ایجاد می‌شود؟", a: "شبکیه", options: ["قرنیه", "عدسی", "شبکیه", "مردمک"] },
+            { q: "رنگ چشم افراد (آبی، مشکی، سبز و...) مربوط به کدام بخش است؟", a: "عنبیه", options: ["مردمک", "عنبیه", "شبکیه", "قرنیه"] },
+            { q: "(عملکردی) مریم در حال تماشای مسابقه‌ی والیبال است. او چگونه متوجه حرکت توپ می‌شود؟", a: "نور بازتابش‌شده از توپ وارد چشم او می‌شود.", options: ["توپ به عدسی برخورد می‌کند.", "نور بازتابش‌شده از توپ وارد چشم او می‌شود.", "عصب بینایی، نور را به سمت توپ می‌فرستد.", "شبکیه خودش نور تولید می‌کند تا توپ دیده شود."] },
+            { q: "(عملکردی) سینا در یک روز آفتابی بسیار روشن از خانه خارج می‌شود. چه تغییری در چشم او رخ می‌دهد؟", a: "مردمک تنگ می‌شود.", options: ["مردمک تنگ می‌شود.", "مردمک گشادتر می‌شود.", "عنبیه بزرگ‌تر می‌شود.", "عدسی مقعر می‌شود."] },
+            { q: "مسیر درست عبور نور در چشم از بیرون تا ایجاد تصویر کدام است Portsmouth؟", a: "مردمک ➔ عدسی ➔ شبکیه", options: ["مردمک ➔ عدسی ➔ شبکیه", "شبکیه ➔ عدسی ➔ مردمک", "عدسی ➔ قرنیه ➔ شبکیه", "عنبیه ➔ شبکیه ➔ عدسی"] },
+            { q: "دقیقاً پشت پرده‌ی گوش چه بخش‌هایی قرار دارد؟", a: "بخش حلزونی، استخوان‌های کوچک گوش، عصب شنوایی", options: ["لاله گوش pipeline، مجرای شنوایی، سوراخ گوش", "بخش حلزونی، استخوان‌های کوچک گوش، عصب شنوایی", "فقط استخوان سر و عصب شنوایی", "سمعک و گوش داخلی"] },
+            { q: "(عملکردی) اگر مینا نتواند تابلوی مغازه‌ها را از فاصله‌ی دور بخواند، چشم‌پزشک چه عینکی به او می‌دهد؟", a: "عینک با عدسی مقعر", options: ["عینک با عدسی محدب", "عینک با عدسی مقعر", "عینک آفتابی", "عینک با عدسی شفاف بدون شیار"] },
+            { q: "وظیفه‌ی اصلی عدسی چشم چیست？", a: "شکستن نور واردشده و ایجاد تصویر روی شبکیه", options: ["تولید نور در تاریکی", "شکستن نور واردشده و ایجاد تصویر روی شبکیه", "فرستادن مستقیم پیام به ماهیچه‌ها", "محافظت از قرنیه"] },
+            { q: "(عملکردی) احمد احساس می‌کند گوشش گرفته و خوب نمی‌شنود. پس از مراجعه به پزشک، دلیل این اتفاق چه چیزی تشخیص داده می‌شود؟", a: "ماده‌ی چرب مجرای شنوایی زیاد شده و به پرده چسبیده است.", options: ["پرده گوش او پاره شده است.", "استخوان‌های کوچک گوش آسیب دیده‌اند.", "ماده‌ی چرب مجرای شنوایی زیاد شده و به پرده چسبیده است.", "بخش حلزونی گوش از کار افتاده است."] },
+            { q: "بخش حلزونی گوش در کجا قرار دارد؟", a: "قسمت مارپیچی گوش میانی", options: ["قسمت مارپیچی گوش میانی", "انتهای گوش خارجی", "ابتدای مجرای شنوایی", "روی لاله‌ی گوش"] },
+            { q: "چه کسی نوع عینک مناسب را برای افراد انتخاب می‌کند؟", a: "چشم‌پزشک", options: ["خود فرد", "چشم‌پزشک", "فروشنده‌ی عینک", "شنوایی‌سنج"] },
+            { q: "(عملکردی) امید می‌خواهد از گوش‌هایش به‌خوبی مراقبت کند. کدام کار طبق آموخته‌های درس برای او مناسب است؟", a: "تمیز کردن مرتب لاله‌ی گوش با دستمال مرطوب", options: ["گوش دادن به موسیقی با صدای بسیار بلند", "تمیز کردن مرتب لاله‌ی گوش با دستمال مرطوب", "وارد کردن یک چوب نازک برای تمیزی مجرای شنوایی", "داد زدن در گوش دوستانش هنگام بازی"] },
+            { q: "چرا مردمک همیشه در ظاهر سیاه دیده می‌شود؟", a: "چون داخل کره‌ی چشم تاریک است.", options: ["چون رنگ عنبیه همیشه سیاه است.", "چون داخل کره‌ی چشم تاریک است.", "چون نور خورشید باعث تیرگی آن می‌شود.", "چون قرنیه سیاه‌رنگ است."] },
+            { q: "(عملکردی) پدربزرگ برای خواندن روزنامه به مشکل برمی‌خورد، اما منظره‌ی کوه‌های دور را به‌خوبی تشخیص می‌دهد. مشکل بینایی او چیست و به چه عدسی نیاز دارد؟", a: "دوربین - محدب", options: ["نزدیک‌بین - مقعر", "دوربین - محدب", "نزدیک‌بین - محدب", "دوربین - مقعر"] },
+            { q: "سمعک، صداها را دریافت کرده و به کجا می‌فرستد؟", a: "گوش داخلی", options: ["گوش خارجی", "لاله‌ی گوش", "گوش داخلی", "مغز حریف"] },
+
+            { q: "بخش جلوی چشم که شفاف است و نور از آن عبور می‌کند، ................... نام دارد.", a: "قرنیه", options: ["قرنیه", "شبکیه", "مردمک", "عنبیه"] },
+            { q: "سوراخ گوش در ابتدای ................... قرار دارد.", a: "مجرای شنوایی", options: ["مجرای شنوایی", "لاله گوش", "پرده گوش", "بخش حلزونی"] },
+            { q: "(عملکردی) زمانی که علی در استخر شنا می‌کند، برای جلوگیری از آسیب به چشم‌هایش نباید در آب‌های ................... شنا کند.", a: "آلوده", options: ["آلوده", "سرد", "عمیق", "شور"] },
+            { q: "در مجرای شنوایی ماده‌ای چرب ترشح می‌شود که پرده‌ی گوش را ................... نرم نگه می‌دارد.", a: "نرم", options: ["نرم", "خشک", "تمیز", "سخت"] },
+            { q: "(عملکردی) وقتی معلم در کلاس صحبت执行 می‌آورد، لرزش صدای او ابتدا به ................... گوش دانش‌آموزان برخورد کرده و سپس استخوان‌های بسیار کوچک پشت آن را می‌لرزاند.", a: "پرده‌ی گوش", options: ["پرده‌ی گوش", "لاله گوش", "بخش حلزونی", "عصب شنوایی"] },
+            { q: "چشم به شکل ................... است و بیشتر قسمت‌های آن درون استخوان سر قرار گرفته است.", a: "کروی", options: ["کروی", "بیضی", "تخت", "مخروطی"] },
+            { q: "(عملکردی) اگر سارا نتواند اجسام دور را به‌خوبی ببیند، اما اجسام نزدیک را عالی ببیند، او یک فرد ................... است.", a: "نزدیک‌بین", options: ["نزدیک‌بین", "دوربین", "کوررنگ", "آستیگمات"] },
+            { q: "در گوش، لرزش استخوان‌های کوچک به بخش ................... منتقل می‌شود تا از طریق عصب پیام فرستاده شود.", a: "حلزونی", options: ["حلزونی", "پرده گوش", "لاله", "مجرای شنوایی"] },
+            { q: "تنگ و گشاد شدن مردمک، میزان ................... را که وارد چشم می‌شود، تنظیم می‌کند.", a: "نوری", options: ["نوری", "صدایی", "هوا", "خون"] },
+            { q: "ما در ظاهر بیرونی گوش فقط می‌توانیم ................... گوش و سوراخ آن را ببینیم.", a: "لاله", options: ["لاله", "پرده", "مجرای", "حلزونی"] }
+        ];
+
+        let quizDeck = [];
+        function shuffleArray(array) {
+            let curId = array.length;
+            while (0 !== curId) {
+                let randId = Math.floor(Math.random() * curId);
+                curId -= 1;
+                let tmp = array[curId]; array[curId] = array[randId]; array[randId] = tmp;
+            }
+            return array;
+        }
+        function refillDeck() { quizDeck = [...vocabData]; shuffleArray(quizDeck); }
+
+        // --- Game Setup ---
+        const WORLD_WIDTH = 5000; const WORLD_HEIGHT = 5000; const CAMERA_ZOOM = 0.30;
+        let playerName = ""; let currentLevel = 1; let selectedDifficultyMode = "medium";
+        let coins = 30; let score = 0; let isPrepPhase = true; let prepTimeRemaining = 30; let timeRemaining = 300;
+        let castleHp = 3000; let playerCastleLastShot = 0; 
+        let darkCastleData = { hp: 4000, maxHp: 4000, lastShot: 0, x: 0, y: 0 };
+        let selectedWeapon = null; let isGameRunning = false;
+        let camera = { x: 0, y: 0 }; let camMove = { up: false, down: false, left: false, right: false };
+        let lastTime = 0; let enemySpawnTimer = 0;
+        let enemies = []; let enemyArchers = []; let towers = []; let projectiles = []; let defenders = []; let environmentDecorations = [];
+        let particles = []; let floatingTexts = []; let screenShake = 0; let flashEffects = []; let ambientParticles = [];
+        let hasSeenTutorial = false; let currentTutorialStep = 0;
+        let bgGradient = null;
+
+        const tutorialSteps = [
+            { title: "به میدان نبرد خوش آمدی! ⚔️", desc: "فرمانده، دشمنان در راهند. قبل از شروع نبرد، بگذار امکانات قلعه را به تو معرفی کنم." },
+            { title: "آماده‌سازی طلایی ⏳", desc: "در ابتدای بازی ۳۰ ثانیه زمان طلا داری تا بدون حمله دشمن، نیروهای خود را بچینی." },
+            { title: "هدف نهایی 🏯", desc: "شرط پیروزی فقط زنده ماندن نیست! باید به قلعه پلیدی در آن سوی نقشه حمله کنی و آن را نابود کنی." },
+            { title: "دفاع متقابل 🏰", desc: "قلعه شما و قلعه دشمن هر دو تیراندازی می‌کنند. مراقب جان قلعه خودی (۳۰۰۰) باش!" },
+            { title: "برج‌ها و نیروها 🪖", desc: "از منوی سمت چپ برج‌های دفاعی ثابت و نیروهای متحرک بخر تا به سمت قلعه دشمن پیشروی کنند. دشمنان کشته شده هم به تو سکه می‌دهند!" },
+            { title: "سکه رایگان 🪙", desc: "همیشه دکمه‌ی چشمک‌زن «آزمون» در پایین منو رو بزن، به سوالات علوم پاسخ بده و ۵ سکه جایزه بگیر!" },
+            { title: "حمله ویرانگر 🚀", desc: "فراموش نکن، در نهایت قلعه رو با موشک هایی که داری شخمش بزنی!" }
+        ];
+
+        // فقط یک جایگاه سازه برای مراحل ۱، ۲ و ۳ در نزدیکی قلعه تاریکی
+        const levelConfig = {
+            1: { name: 'جنگل سبز', bg1: '#0f2913', bg2: '#051207', decos: ['🌲', '🌳', '🪨', '🍄', '🌾'], pColor: 'rgba(100,255,100,0.5)', darkCastleHp: 3000, 
+                 path: [{x:300,y:150},{x:300,y:500},{x:1400,y:500},{x:1400,y:1000},{x:600,y:1000},{x:600,y:1600},{x:1800,y:1600},{x:1800,y:2200},{x:1000,y:2200}], 
+                 slots: [{x:550,y:800},{x:800,y:650},{x:1200,y:650},{x:1550,y:800},{x:800,y:850},{x:450,y:1200},{x:800,y:1450},{x:1400,y:1450},{x:1700,y:1900},{x:1200,y:2050}, {x:450,y:350}, {x:1400,y:1150}] },
+            2: { name: 'صحرای سوزان', bg1: '#2c1e11', bg2: '#140d07', decos: ['🌵', '🦂', '🪨', '🥀', '🦴'], pColor: 'rgba(255,200,100,0.5)', darkCastleHp: 5000, 
+                 path: [{x:150,y:400},{x:800,y:400},{x:800,y:1300},{x:2000,y:1300},{x:2000,y:2100},{x:1000,y:2100}], 
+                 slots: [{x:700,y:700},{x:1100,y:500},{x:1400,y:1100},{x:1700,y:1550},{x:2200,y:1700},{x:1600,y:2000},{x:1100,y:1800}, {x:500,y:250}, {x:950,y:850}] },
+            3: { name: 'کوهستان یخی', bg1: '#0f233a', bg2: '#050c14', decos: ['🌲', '⛄', '🧊', '🏔️', '❄️'], pColor: 'rgba(200,255,255,0.6)', darkCastleHp: 7000, 
+                 path: [{x:2600,y:300},{x:1200,y:300},{x:1200,y:900},{x:400,y:900},{x:400,y:1900},{x:1600,y:1900}], 
+                 slots: [{x:1800,y:550},{x:1400,y:600},{x:800,y:500},{x:800,y:1150},{x:300,y:1200},{x:600,y:1700},{x:1200,y:1650}, {x:2200,y:450}, {x:1050,y:700}] },
+            4: { name: 'مرداب سمی', bg1: '#112211', bg2: '#050a05', decos: ['🍄', '🐸', '🦠', '🥀', '🕸️'], pColor: 'rgba(150,255,50,0.4)', darkCastleHp: 9000, 
+                 path: [{x:200,y:2500},{x:1200,y:2500},{x:1200,y:800},{x:2400,y:800},{x:2400,y:2000},{x:3600,y:2000},{x:3600,y:1000}], 
+                 slots: [{x:600,y:2200},{x:1500,y:1500},{x:1350,y:1200},{x:2000,y:1100},{x:2800,y:1400},{x:2100,y:1800},{x:3200,y:2300},{x:3900,y:1500}, {x:1050,y:1800}, {x:2200,y:650}] },
+            5: { name: 'آتشفشان خروشان', bg1: '#2d0505', bg2: '#0f0202', decos: ['🌋', '🔥', '☄️', '🦴', '🪨'], pColor: 'rgba(255,100,50,0.6)', darkCastleHp: 12000, 
+                 path: [{x:4000,y:4000},{x:1000,y:4000},{x:1000,y:1000},{x:3000,y:1000},{x:3000,y:2500},{x:2000,y:2500}], 
+                 slots: [{x:2500,y:3700},{x:1300,y:2500},{x:1500,y:1500},{x:2000,y:1200},{x:3300,y:1500},{x:2600,y:2200},{x:2000,y:2000}, {x:3200,y:3800}, {x:1150,y:2000}, {x:1150,y:3000}] }
+        };
+
+        const weapons = {
+            barracks: { cost: 4, range: 210, damage: 6, cooldown: 500, pEmoji: '⚡', emoji: '🪖', bg: 'rgba(0, 242, 254, 0.2)', rangeColor: 'rgba(0, 242, 254, 0.05)', soundKey: 'soldier' },
+            tank: { cost: 7, range: 340, damage: 15, cooldown: 1000, pEmoji: '💥', emoji: '🚜', bg: 'rgba(241, 196, 15, 0.2)', rangeColor: 'rgba(241, 196, 15, 0.05)', soundKey: 'tank' },
+            plane: { cost: 12, range: 490, damage: 25, cooldown: 1500, pEmoji: '✨', emoji: '✈️', bg: 'rgba(165, 94, 234, 0.2)', rangeColor: 'rgba(165, 94, 234, 0.05)', soundKey: 'plane' },
+            missile: { cost: 20, range: 4000, damage: 80, cooldown: 3500, pEmoji: '🚀', emoji: '🚀', bg: 'rgba(255, 0, 127, 0.2)', rangeColor: 'rgba(255, 0, 127, 0.02)', soundKey: 'missile' }
+        };
+
+        const defenderStats = {
+            swordsman: { cost: 8, maxHp: 200, speed: 4.5, damage: 20, range: 60, type: 'melee', cooldown: 800, emoji: '🤺' },
+            archer: { cost: 12, maxHp: 100, speed: 5.0, damage: 25, range: 300, type: 'ranged', cooldown: 1600, emoji: '🏹', pEmoji: '☄️' },
+            paladin: { cost: 20, maxHp: 800, speed: 3.5, damage: 40, range: 60, type: 'melee', cooldown: 1200, emoji: '🛡️' }
+        };
+
+        const enemyTypes = [
+            { maxHp: 60, speed: 6.0, emoji: '🧟‍♂️', damage: 10, rewardCoins: 1 },
+            { maxHp: 180, speed: 4.0, emoji: '👹', damage: 20, rewardCoins: 2 },
+            { maxHp: 350, speed: 2.5, emoji: '🧌', damage: 40, rewardCoins: 4 },
+            { maxHp: 120, speed: 7.5, emoji: '👻', damage: 25, rewardCoins: 3 },
+            { maxHp: 1500, speed: 1.8, emoji: '🐉', damage: 100, rewardCoins: 15 }
+        ];
+
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+        window.addEventListener('resize', resize);
+
+        function showLevelScreen() {
+            playerName = document.getElementById('player-name').value;
+            if (!playerName.trim()) { alert("نام خود را وارد کنید!"); return; }
+            document.getElementById('start-screen').style.display = 'none';
+            document.getElementById('level-screen').style.display = 'block';
+            
+            if(bgMusic.paused && !isMuted && bgMusic.src) { 
+                bgMusic.play().catch(e => console.log("")); 
+            }
+        }
+
+        function backToStart() {
+            document.getElementById('level-screen').style.display = 'none'; 
+            document.getElementById('start-screen').style.display = 'block';
+        }
+
+        function selectDifficulty(lvl) {
+            currentLevel = lvl;
+            document.getElementById('level-screen').style.display = 'none';
+            document.getElementById('difficulty-screen').style.display = 'block';
+            playSound('ui');
+        }
+
+        function backToLevels() {
+            document.getElementById('difficulty-screen').style.display = 'none';
+            document.getElementById('level-screen').style.display = 'block';
+            playSound('ui');
+        }
+
+        function exitToMenu() {
+            isGameRunning = false;
+            if(window.timerInterval) clearInterval(window.timerInterval);
+            document.getElementById('game-screen').style.display = 'none';
+            document.getElementById('level-screen').style.display = 'block';
+            if(!hasCustomMusic) {
+                bgMusic.src = defaultMenuMusic;
+                if(!isMuted) bgMusic.play().catch(e => {});
+            }
+            playSound('ui');
+        }
+
+        function startLevelWithDifficulty(diff) {
+            selectedDifficultyMode = diff;
+            document.getElementById('difficulty-screen').style.display = 'none';
+            document.getElementById('game-screen').style.display = 'block';
+            
+            if(!hasCustomMusic) {
+                bgMusic.src = defaultGameMusic;
+                if(!isMuted) bgMusic.play().catch(e => {});
+            }
+
+            let diffLabel = "متوسط";
+            if(diff === 'easy') { diffLabel = "آسان ⭐"; timeRemaining = 300; }
+            if(diff === 'medium') { diffLabel = "متوسط ⭐⭐"; timeRemaining = 360; }
+            if(diff === 'hard') { diffLabel = "سخت ⭐⭐⭐"; timeRemaining = 420; }
+            document.getElementById('ui-diff-text').innerText = diffLabel;
+
+            refillDeck();
+            
+            if(currentLevel === 1) coins = 60; else if(currentLevel === 2) coins = 50; else coins = 40;
+            score = 0; isPrepPhase = true; prepTimeRemaining = 30; castleHp = 3000; playerCastleLastShot = 0;
+            document.getElementById('ui-time-container').style.color = 'white';
+            
+            const lvlData = levelConfig[currentLevel];
+            
+            let calculatedDarkCastleHp = lvlData.darkCastleHp;
+            if(diff === 'easy') calculatedDarkCastleHp = Math.floor(lvlData.darkCastleHp * 0.7);
+            if(diff === 'hard') calculatedDarkCastleHp = Math.floor(lvlData.darkCastleHp * 1.4);
+
+            darkCastleData = { hp: calculatedDarkCastleHp, maxHp: calculatedDarkCastleHp, lastShot: 0, x: lvlData.path[0].x, y: lvlData.path[0].y, isDarkCastle: true };
+            enemies = []; towers = []; projectiles = []; defenders = []; environmentDecorations = []; particles = []; floatingTexts = []; flashEffects = []; ambientParticles = [];
+            
+            // تخصیص کمانداران محافظ در دو طرف قلعه تاریکی
+            enemyArchers = [
+                { id: 'left', x: darkCastleData.x - 140, y: darkCastleData.y + 50, hp: 600, maxHp: 600, damage: 15, range: 420, cooldown: 1800, lastAttack: 0, isDead: false, respawnTimer: 0, isEnemyArcher: true },
+                { id: 'right', x: darkCastleData.x + 140, y: darkCastleData.y + 50, hp: 600, maxHp: 600, damage: 15, range: 420, cooldown: 1800, lastAttack: 0, isDead: false, respawnTimer: 0, isEnemyArcher: true }
+            ];
+            
+            document.getElementById('ui-name').innerText = "فرمانده: " + playerName; 
+            document.getElementById('ui-level').innerText = lvlData.name;
+            
+            updateUI(); 
+            lvlData.slots.forEach(s => s.isOccupied = false);
+            
+            bgGradient = ctx.createLinearGradient(0, 0, WORLD_WIDTH, WORLD_HEIGHT);
+            bgGradient.addColorStop(0, lvlData.bg1); bgGradient.addColorStop(1, lvlData.bg2);
+
+            for(let i=0; i<150; i++) {
+                environmentDecorations.push({
+                    x: Math.random() * WORLD_WIDTH, y: Math.random() * WORLD_HEIGHT,
+                    emoji: lvlData.decos[Math.floor(Math.random() * lvlData.decos.length)],
+                    size: 40 + Math.random() * 60, phase: Math.random() * Math.PI * 2, speed: 0.0005 + Math.random() * 0.001
+                });
+            }
+            for(let i=0; i<80; i++) {
+                ambientParticles.push({
+                    x: Math.random() * WORLD_WIDTH, y: Math.random() * WORLD_HEIGHT,
+                    vx: (Math.random() - 0.5) * 1.5, vy: (Math.random() - 0.5) * 1.5,
+                    size: Math.random() * 4 + 1, color: lvlData.pColor
+                });
+            }
+
+            if(audioCtx.state === 'suspended') audioCtx.resume();
+            resize();
+            
+            const castle = lvlData.path[lvlData.path.length - 1];
+            camera.x = castle.x - (canvas.width / CAMERA_ZOOM) / 2; camera.y = castle.y - (canvas.height / CAMERA_ZOOM) / 2;
+            
+            if (!hasSeenTutorial) { startTutorial(); } else { beginGamePlay(); }
+        }
+
+        function startTutorial() {
+            currentTutorialStep = 0;
+            document.getElementById('tutorial-overlay').style.display = 'block'; 
+            document.getElementById('tutorial-modal').style.display = 'block';
+            updateTutorialUI(); drawFrame(0);
+        }
+        function updateTutorialUI() {
+            const step = tutorialSteps[currentTutorialStep];
+            document.getElementById('tut-title').innerText = step.title; document.getElementById('tut-desc').innerText = step.desc;
+            if (currentTutorialStep === tutorialSteps.length - 1) {
+                document.getElementById('tut-btn').innerText = "شروع نبرد! 🚀"; 
+                document.getElementById('tut-btn').style.background = "linear-gradient(135deg, var(--success), #20bf6b)";
+            } else {
+                document.getElementById('tut-btn').innerText = "بعدی ➡️"; 
+                document.getElementById('tut-btn').style.background = "";
+            }
+            playSound('ui');
+        }
+        function nextTutorialStep() {
+            currentTutorialStep++;
+            if (currentTutorialStep >= tutorialSteps.length) {
+                document.getElementById('tutorial-overlay').style.display = 'none'; 
+                document.getElementById('tutorial-modal').style.display = 'none';
+                hasSeenTutorial = true; beginGamePlay();
+            } else { updateTutorialUI(); }
+        }
+
+        function beginGamePlay() {
+            isGameRunning = true; lastTime = Date.now(); requestAnimationFrame(gameLoop);
+            if(window.timerInterval) clearInterval(window.timerInterval);
+            window.timerInterval = setInterval(updateTimer, 1000);
+            showToast("برای جنگ آماده شو! ۳۰ ثانیه وقت داری برج‌هایت را بسازی...", 5000);
+        }
+
+        function showToast(msg, duration = 4000) {
+            const toast = document.getElementById('toast-alert'); toast.innerText = msg; toast.style.opacity = 1;
+            setTimeout(() => { toast.style.opacity = 0; }, duration);
+        }
+
+        function updateTimer() {
+            if (!isGameRunning) return;
+            const timeContainer = document.getElementById('ui-time-container'); 
+            const timeText = document.getElementById('ui-time');
+            if (isPrepPhase) {
+                prepTimeRemaining--; timeContainer.style.color = '#f1c40f'; timeText.innerText = `آماده‌سازی: 00:${prepTimeRemaining.toString().padStart(2,'0')}`;
+                if (prepTimeRemaining <= 0) {
+                    isPrepPhase = false; showToast("زمان آماده‌سازی تمام شد! حمله نیروهای پلیدی آغاز شد! 👹", 5000); timeContainer.style.color = 'white';
+                }
+            } else {
+                if(timeRemaining > 0) {
+                    timeRemaining--; let m = Math.floor(timeRemaining / 60); let s = timeRemaining % 60;
+                    timeText.innerText = `${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
+                    
+                    if(timeRemaining === 240) showToast("یک دقیقه گذشت! دشمنان قوی‌تری وارد می‌شوند.", 4000);
+                    else if(timeRemaining === 120) showToast("۲ دقیقه زمان باقیست! به قلعه دشمن ضربه بزن!", 4000);
+                    else if(timeRemaining === 60) showToast("فقط ۱ دقیقه دیگه فرصت داری!"); 
+                    
+                    if(timeRemaining === 0) {
+                        showToast("دشمنان تمام شدند! حالا وقتشه قلعه رو با موشک هایی که داری شخمش بزنی! 🚀", 6000);
+                        timeContainer.style.color = '#e74c3c'; timeText.innerText = "حمله نهایی!";
+                    }
+                }
+            }
+        }
+
+        function updateUI() {
+            document.getElementById('ui-coins').innerText = coins; document.getElementById('ui-hp').innerText = Math.max(0, castleHp);
+        }
+
+        function createParticles(x, y, color) {
+            for(let i=0; i<8; i++) {
+                particles.push({
+                    x: x, y: y, vx: (Math.random()-0.5)*25, vy: (Math.random()-0.5)*25,
+                    life: 1.0, color: color, size: 8 + Math.random()*10
+                });
+            }
+        }
+
+        function createFloatingText(x, y, text, color) {
+            floatingTexts.push({
+                x: x + (Math.random() * 40 - 20), y: y - 20, 
+                text: text, color: color, life: 1.0, vy: -2
+            });
+        }
+
+        function showQuiz() {
+            if(!isGameRunning) return;
+            isGameRunning = false; 
+
+            if(quizDeck.length === 0) refillDeck();
+            const qObj = quizDeck.pop();
+
+            document.getElementById('question-text').innerText = qObj.q;
+            
+            let options = qObj.options ? [...qObj.options] : [];
+            shuffleArray(options);
+
+            const container = document.getElementById('options-container');
+            container.innerHTML = '';
+            options.forEach(opt => {
+                const btn = document.createElement('button');
+                btn.className = 'option-btn'; btn.innerText = opt;
+                btn.onclick = () => {
+                    if(opt === qObj.a) { 
+                        coins += 5; playSound('correct'); showToast("آفرین! ۵ سکه گرفتی 🪙", 2000); 
+                    } else {
+                        showToast(`اشتباه بود! جواب صحیح:\n ${qObj.a}`, 4000); 
+                    }
+                    updateUI(); document.getElementById('quiz-modal').style.display = 'none';
+                    isGameRunning = true; lastTime = Date.now(); requestAnimationFrame(gameLoop);
+                };
+                container.appendChild(btn);
+            });
+            document.getElementById('quiz-modal').style.display = 'block';
+        }
+
+        function selectWeapon(type) {
+            document.querySelectorAll('.weapon-card').forEach(c => c.classList.remove('selected'));
+            if (type === 'shovel') { selectedWeapon = 'shovel'; event.currentTarget.classList.add('selected'); return; }
+            if (coins >= weapons[type].cost) { selectedWeapon = type; event.currentTarget.classList.add('selected'); } 
+            else { alert("سکه کافی نداری!"); selectedWeapon = null; }
+        }
+
+        function buyDefender(type) {
+            document.querySelectorAll('.weapon-card').forEach(c => c.classList.remove('selected')); selectedWeapon = null;
+            const stats = defenderStats[type];
+            if(coins >= stats.cost) {
+                coins -= stats.cost; updateUI();
+                const path = levelConfig[currentLevel].path; const castle = path[path.length - 1];
+                let ox = Math.random() * 80 - 40; let oy = Math.random() * 80 - 40; let speedVar = stats.speed * (0.8 + Math.random() * 0.4);
+                let spawnTime = Date.now();
+                
+                defenders.push({ 
+                    x: castle.x + ox, y: castle.y + oy, offsetX: ox, offsetY: oy, 
+                    targetIndex: path.length - 2, ...stats, speed: speedVar, hp: stats.maxHp, 
+                    lastAttack: 0, spawnTime: spawnTime 
+                });
+                playSound('correct');
+            } else { alert("سکه کافی نداری!"); }
+        }
+
+        canvas.addEventListener('click', (e) => {
+            if (!selectedWeapon) return;
+            const clickX = (e.clientX / CAMERA_ZOOM) + camera.x; const clickY = (e.clientY / CAMERA_ZOOM) + camera.y;
+            const slots = levelConfig[currentLevel].slots;
+            for (let slot of slots) {
+                if (Math.hypot(slot.x - clickX, slot.y - clickY) < 140) {
+                    if (selectedWeapon === 'shovel') {
+                        if (slot.isOccupied) {
+                            towers = towers.filter(t => t.x !== slot.x || t.y !== slot.y);
+                            slot.isOccupied = false; selectedWeapon = null; document.querySelectorAll('.weapon-card').forEach(c => c.classList.remove('selected'));
+                            playSound('sword'); createParticles(slot.x, slot.y, '#f1c40f'); break;
+                        }
+                    } 
+                    else if (!slot.isOccupied) {
+                        towers.push({ x: slot.x, y: slot.y, type: weapons[selectedWeapon], lastShotTime: 0 });
+                        coins -= weapons[selectedWeapon].cost; slot.isOccupied = true; selectedWeapon = null;
+                        document.querySelectorAll('.weapon-card').forEach(c => c.classList.remove('selected'));
+                        updateUI(); break;
+                    }
+                }
+            }
+        });
+
+        window.addEventListener('keydown', (e) => {
+            if(e.key === 'ArrowUp') camMove.up = true; if(e.key === 'ArrowDown') camMove.down = true;
+            if(e.key === 'ArrowLeft') camMove.left = true; if(e.key === 'ArrowRight') camMove.right = true;
+        });
+        window.addEventListener('keyup', (e) => {
+            if(e.key === 'ArrowUp') camMove.up = false; if(e.key === 'ArrowDown') camMove.down = false;
+            if(e.key === 'ArrowLeft') camMove.left = false; if(e.key === 'ArrowRight') camMove.right = false;
+        });
+        const setupBtn = (id, dir) => {
+            const btn = document.getElementById(id);
+            const start = (e) => { e.preventDefault(); camMove[dir] = true; }; const stop = (e) => { e.preventDefault(); camMove[dir] = false; };
+            btn.addEventListener('mousedown', start); btn.addEventListener('mouseup', stop); btn.addEventListener('mouseleave', stop);
+            btn.addEventListener('touchstart', start, {passive: false}); btn.addEventListener('touchend', stop, {passive: false});
+        };
+        setupBtn('btn-up', 'up'); setupBtn('btn-down', 'down'); setupBtn('btn-left', 'left'); setupBtn('btn-right', 'right');
+
+        function manageEnemySpawns(dt) {
+            if (isPrepPhase || timeRemaining <= 0) return; 
+            enemySpawnTimer -= dt;
+            
+            let diffMultiplier = 1.4; 
+            if (selectedDifficultyMode === 'easy') diffMultiplier = 2.5; 
+            if (selectedDifficultyMode === 'hard') diffMultiplier = 0.8; 
+
+            let timeFactor = timeRemaining > 0 ? Math.min(timeRemaining, 300) : 30;
+            let baseInterval = Math.max(1500, timeFactor * 10); 
+            let spawnInterval = baseInterval * diffMultiplier;
+
+            if(enemySpawnTimer <= 0) {
+                enemySpawnTimer = spawnInterval;
+                let rand = Math.random(); let eType;
+                
+                let checkTime = Math.min(timeRemaining, 300);
+                if(checkTime > 240) eType = rand > 0.8 ? enemyTypes[1] : enemyTypes[0];
+                else if(checkTime > 150) eType = rand > 0.7 ? enemyTypes[2] : (rand > 0.4 ? enemyTypes[1] : enemyTypes[0]);
+                else if(checkTime > 60) eType = rand > 0.8 ? enemyTypes[3] : (rand > 0.5 ? enemyTypes[2] : (rand > 0.2 ? enemyTypes[1] : enemyTypes[0]));
+                else eType = rand > 0.9 ? enemyTypes[4] : (rand > 0.6 ? enemyTypes[3] : (rand > 0.3 ? enemyTypes[2] : enemyTypes[1]));
+
+                let hpModifier = 1.0;
+                if(selectedDifficultyMode === 'easy') hpModifier = 0.7;
+                if(selectedDifficultyMode === 'hard') hpModifier = 1.4;
+
+                const path = levelConfig[currentLevel].path;
+                let ox = Math.random() * 60 - 30; let oy = Math.random() * 60 - 30;
+                enemies.push({
+                    x: path[0].x + ox, y: path[0].y + oy, offsetX: ox, offsetY: oy, targetIndex: 1,
+                    hp: Math.floor(eType.maxHp * hpModifier), maxHp: Math.floor(eType.maxHp * hpModifier), speed: eType.speed, emoji: eType.emoji, damage: eType.damage, rewardCoins: eType.rewardCoins, lastAttack: 0, isBlocked: false
+                });
+            }
+        }
+
+        function drawFrame(dt = 16) {
+            const lvlData = levelConfig[currentLevel];
+            const path = lvlData.path;
+            
+            const viewWidth = canvas.width / CAMERA_ZOOM;
+            const viewHeight = canvas.height / CAMERA_ZOOM;
+            const viewMinX = camera.x - 300; const viewMaxX = camera.x + viewWidth + 300;
+            const viewMinY = camera.y - 300; const viewMaxY = camera.y + viewHeight + 300;
+
+            ctx.fillStyle = bgGradient;
+            ctx.fillRect(0, 0, canvas.width, canvas.height); 
+            
+            ctx.save(); 
+            ctx.scale(CAMERA_ZOOM, CAMERA_ZOOM); 
+            
+            let shakeX = 0, shakeY = 0;
+            if (screenShake > 0) { shakeX = (Math.random()-0.5)*15; shakeY = (Math.random()-0.5)*15; screenShake--; }
+            ctx.translate(-camera.x + shakeX, -camera.y + shakeY);
+            
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.04)';
+            ctx.lineWidth = 2;
+            let startX = Math.max(0, Math.floor(viewMinX / 150) * 150);
+            let endX = Math.min(WORLD_WIDTH, viewMaxX);
+            let startY = Math.max(0, Math.floor(viewMinY / 150) * 150);
+            let endY = Math.min(WORLD_HEIGHT, viewMaxY);
+            
+            for(let x = startX; x <= endX; x += 150) { ctx.beginPath(); ctx.moveTo(x, startY); ctx.lineTo(x, endY); ctx.stroke(); }
+            for(let y = startY; y <= endY; y += 150) { ctx.beginPath(); ctx.moveTo(startX, y); ctx.lineTo(endX, y); ctx.stroke(); }
+
+            ambientParticles.forEach(p => {
+                if(p.x > viewMinX && p.x < viewMaxX && p.y > viewMinY && p.y < viewMaxY) {
+                    ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, Math.PI*2);
+                    ctx.fillStyle = p.color; ctx.fill();
+                }
+                if(isGameRunning) { p.x += p.vx; p.y += p.vy; }
+                if(p.x < 0) p.x = WORLD_WIDTH; if(p.x > WORLD_WIDTH) p.x = 0;
+                if(p.y < 0) p.y = WORLD_HEIGHT; if(p.y > WORLD_HEIGHT) p.y = 0;
+            });
+
+            environmentDecorations.forEach(deco => {
+                if(deco.x > viewMinX && deco.x < viewMaxX && deco.y > viewMinY && deco.y < viewMaxY) {
+                    if(isGameRunning) deco.phase += deco.speed * dt;
+                    let swayX = Math.sin(deco.phase) * 12; let swayY = Math.cos(deco.phase) * 8;
+                    ctx.font = `${deco.size}px Arial`; ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+                    ctx.globalAlpha = 1.0;
+                    ctx.shadowColor = 'rgba(0,0,0,0.5)'; ctx.shadowBlur = 10;
+                    ctx.fillText(deco.emoji, deco.x + swayX, deco.y + swayY);
+                    ctx.shadowBlur = 0;
+                }
+            });
+
+            ctx.save();
+            ctx.globalAlpha = 1.0;
+            ctx.beginPath(); ctx.moveTo(path[0].x, path[0].y);
+            for (let i = 1; i < path.length; i++) ctx.lineTo(path[i].x, path[i].y);
+            ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+            ctx.strokeStyle = 'rgba(10, 15, 30, 0.7)'; ctx.lineWidth = 160; ctx.stroke(); 
+            ctx.strokeStyle = 'rgba(79, 172, 254, 0.2)'; ctx.lineWidth = 120; ctx.stroke(); 
+            ctx.strokeStyle = 'rgba(0, 242, 254, 0.4)'; ctx.lineWidth = 60; ctx.stroke(); 
+            ctx.restore();
+            
+            lvlData.slots.forEach(slot => {
+                if(slot.x > viewMinX && slot.x < viewMaxX && slot.y > viewMinY && slot.y < viewMaxY) {
+                    ctx.save();
+                    ctx.globalAlpha = 1.0;
+                    ctx.beginPath(); ctx.arc(slot.x, slot.y, 52, 0, Math.PI * 2);
+                    ctx.fillStyle = slot.isOccupied ? 'rgba(0, 0, 0, 0.5)' : 'rgba(15, 23, 42, 0.9)';
+                    ctx.fill(); ctx.lineWidth = 4; ctx.strokeStyle = slot.isOccupied ? '#ff007f' : '#00f2fe'; 
+                    ctx.stroke(); 
+                    if(!slot.isOccupied) { ctx.font = '38px Arial'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('🛡️', slot.x, slot.y); }
+                    ctx.restore();
+                }
+            });
+
+            ctx.save();
+            ctx.globalCompositeOperation = 'screen';
+            for(let i = flashEffects.length - 1; i >= 0; i--) {
+                let f = flashEffects[i];
+                ctx.globalAlpha = f.life;
+                let rad = 150 + (1 - f.life) * 200; 
+                let grad = ctx.createRadialGradient(f.x, f.y, 0, f.x, f.y, rad);
+                grad.addColorStop(0, f.color);
+                grad.addColorStop(1, 'transparent');
+                ctx.beginPath(); ctx.arc(f.x, f.y, rad, 0, Math.PI * 2); ctx.fillStyle = grad; ctx.fill();
+                f.life -= 0.05; if(f.life <= 0) flashEffects.splice(i, 1);
+            }
+            ctx.restore();
+
+            towers.forEach(tower => {
+                if(tower.x > viewMinX && tower.x < viewMaxX && tower.y > viewMinY && tower.y < viewMaxY) {
+                    ctx.save();
+                    ctx.globalAlpha = 1.0;
+                    if(tower.type.range < 1000) { 
+                        ctx.beginPath(); ctx.arc(tower.x, tower.y, tower.type.range, 0, Math.PI * 2);
+                        ctx.fillStyle = tower.type.rangeColor; ctx.fill(); ctx.lineWidth = 1.5; ctx.strokeStyle = 'rgba(0, 242, 254, 0.2)'; ctx.stroke();
+                    }
+                    ctx.beginPath(); ctx.arc(tower.x, tower.y, 48, 0, Math.PI * 2); ctx.fillStyle = tower.type.bg; ctx.fill();
+                    ctx.shadowColor = 'rgba(0, 242, 254, 0.8)'; ctx.shadowBlur = 15;
+                    ctx.font = '62px Arial'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(tower.type.emoji, tower.x, tower.y);
+                    ctx.restore();
+                }
+            });
+
+            const pCastle = path[path.length - 1];
+            if(pCastle.x > viewMinX && pCastle.x < viewMaxX && pCastle.y > viewMinY && pCastle.y < viewMaxY) {
+                ctx.save();
+                ctx.globalAlpha = 1.0;
+                let glowPulse = 30 + Math.sin(Date.now() / 200) * 15;
+                ctx.shadowColor = '#00f2fe'; ctx.shadowBlur = glowPulse;
+                ctx.font = '190px Arial'; ctx.textAlign = 'center'; ctx.textBaseline = 'bottom'; ctx.fillText('🏰', pCastle.x, pCastle.y + 60);
+                ctx.shadowBlur = 0;
+                ctx.font = 'bold 50px Tahoma'; ctx.fillStyle = '#00f2fe'; ctx.fillText('دژ فرشتگان', pCastle.x, pCastle.y - 140);
+                ctx.translate(pCastle.x + 100, pCastle.y - 150); ctx.rotate(Math.sin(Date.now() / 150) * 0.2); ctx.font = '60px Arial'; ctx.fillText('🔷', 0, 0); 
+                ctx.restore();
+            }
+
+            // رسم کمانداران محافظ قلعه تاریکی
+            enemyArchers.forEach(ea => {
+                if(ea.x > viewMinX && ea.x < viewMaxX && ea.y > viewMinY && ea.y < viewMaxY) {
+                    ctx.save();
+                    if(ea.isDead) {
+                        ctx.globalAlpha = 0.5;
+                        ctx.fillStyle = 'rgba(150, 0, 0, 0.3)';
+                        ctx.fillRect(ea.x - 45, ea.y - 35, 90, 55);
+                        ctx.font = '28px Arial'; ctx.fillStyle = '#ff4757'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+                        ctx.fillText('⏳ ' + Math.ceil(ea.respawnTimer/1000), ea.x, ea.y - 5);
+                    } else {
+                        ctx.shadowColor = 'red'; ctx.shadowBlur = 20;
+                        ctx.fillStyle = '#550000'; ctx.fillRect(ea.x - 45, ea.y - 35, 90, 55);
+                        ctx.strokeStyle = '#ff0000'; ctx.lineWidth = 3; ctx.strokeRect(ea.x - 45, ea.y - 35, 90, 55);
+                        ctx.font = '50px Arial'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+                        ctx.fillText('🏹', ea.x, ea.y - 15);
+                        ctx.shadowBlur = 0;
+                        ctx.fillStyle = 'rgba(0,0,0,0.6)'; ctx.fillRect(ea.x - 35, ea.y + 25, 70, 8);
+                        ctx.fillStyle = 'red'; ctx.fillRect(ea.x - 35, ea.y + 25, 70 * (ea.hp / ea.maxHp), 8);
+                    }
+                    ctx.restore();
+                }
+            });
+
+            const dCastle = path[0];
+            if(dCastle.x > viewMinX && dCastle.x < viewMaxX && dCastle.y > viewMinY && dCastle.y < viewMaxY) {
+                ctx.save();
+                ctx.globalAlpha = 1.0;
+                let dGlowPulse = 40 + Math.sin(Date.now() / 200) * 20;
+                ctx.shadowColor = '#ff007f'; ctx.shadowBlur = dGlowPulse;
+                ctx.font = '230px Arial'; ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+                ctx.filter = 'brightness(0.5) sepia(1) hue-rotate(290deg) saturate(4)'; ctx.fillText('🏯', dCastle.x, dCastle.y + 80); ctx.filter = 'none';
+                ctx.shadowBlur = 0;
+                ctx.font = 'bold 50px Tahoma'; ctx.fillStyle = '#ff007f'; ctx.fillText('قلعه دشمن', dCastle.x, dCastle.y - 200);
+                ctx.fillStyle = 'rgba(255,255,255,0.1)'; ctx.fillRect(dCastle.x - 140, dCastle.y - 180, 280, 25);
+                ctx.fillStyle = 'red'; ctx.fillRect(dCastle.x - 140, dCastle.y - 180, 280 * (darkCastleData.hp / darkCastleData.maxHp), 25);
+                ctx.restore();
+            }
+
+            defenders.forEach(d => {
+                ctx.save();
+                let alpha = 1.0;
+                if (d.emoji === '🏹') {
+                    let elapsed = (Date.now() - d.spawnTime) % 10000;
+                    if (elapsed >= 5000) { alpha = 0.3; }
+                }
+                ctx.globalAlpha = alpha;
+                
+                ctx.shadowColor = 'rgba(0, 242, 254, 0.8)'; ctx.shadowBlur = 15;
+                ctx.font = '65px Arial'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(d.emoji, d.x, d.y);
+                ctx.font = '30px Arial'; ctx.fillText('🔹', d.x + 25, d.y - 30);
+                ctx.shadowBlur = 0; 
+                ctx.fillStyle = 'rgba(0,0,0,0.6)'; ctx.fillRect(d.x - 35, d.y + 40, 70, 10);
+                ctx.fillStyle = 'red'; ctx.fillRect(d.x - 35, d.y + 40, 70 * (d.hp / d.maxHp), 10);
+                ctx.restore();
+            });
+
+            enemies.forEach(e => {
+                ctx.save();
+                ctx.globalAlpha = 1.0;
+                ctx.shadowColor = 'rgba(255, 71, 87, 0.9)'; ctx.shadowBlur = 20;
+                ctx.font = '75px Arial'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(e.emoji, e.x, e.y);
+                ctx.font = '35px Arial'; ctx.fillText('🔸', e.x + 35, e.y - 35);
+                ctx.shadowBlur = 0;
+                ctx.fillStyle = 'rgba(0,0,0,0.6)'; ctx.fillRect(e.x - 40, e.y - 55, 80, 11);
+                ctx.fillStyle = 'red'; ctx.fillRect(e.x - 40, e.y - 55, 80 * (e.hp / e.maxHp), 11);
+                ctx.restore();
+            });
+
+            projectiles.forEach(p => {
+                ctx.save();
+                ctx.globalAlpha = 1.0;
+                if(p.emoji === '🚀' || p.emoji === '🔥' || p.emoji === '💥') {
+                    ctx.beginPath(); ctx.arc(p.x, p.y, 40, 0, Math.PI*2);
+                    ctx.fillStyle = p.emoji === '🚀' ? 'rgba(255, 0, 127, 0.3)' : 'rgba(255, 159, 67, 0.3)';
+                    ctx.fill();
+                    ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(p.x - p.vx*2, p.y - p.vy*2);
+                    ctx.strokeStyle = p.emoji === '🚀' ? 'var(--accent)' : '#ff9f43'; ctx.lineWidth = 8; ctx.stroke();
+                } else if(p.emoji === '☄️') {
+                    ctx.beginPath(); ctx.arc(p.x, p.y, 20, 0, Math.PI*2);
+                    ctx.fillStyle = 'rgba(255, 0, 0, 0.4)'; ctx.fill();
+                } else {
+                    ctx.beginPath(); ctx.arc(p.x, p.y, 25, 0, Math.PI*2);
+                    ctx.fillStyle = 'rgba(0, 242, 254, 0.3)'; ctx.fill();
+                }
+                ctx.shadowColor = p.isPlayer ? '#00f2fe' : '#ff007f'; ctx.shadowBlur = 10;
+                ctx.font = '45px Arial'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; 
+                if(p.vx) { ctx.translate(p.x, p.y); ctx.rotate(Math.atan2(p.vy, p.vx)); ctx.fillText(p.emoji, 0, 0); } 
+                else ctx.fillText(p.emoji, p.x, p.y);
+                ctx.restore();
+            });
+
+            ctx.save();
+            for(let i = particles.length - 1; i >= 0; i--) {
+                let p = particles[i];
+                ctx.globalAlpha = p.life; ctx.fillStyle = p.color;
+                ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, Math.PI*2); ctx.fill();
+                p.x += p.vx; p.y += p.vy; p.life -= 0.06; 
+                if(p.life <= 0) particles.splice(i, 1);
+            }
+            ctx.restore();
+
+            ctx.save();
+            for(let i = floatingTexts.length - 1; i >= 0; i--) {
+                let ft = floatingTexts[i];
+                ctx.globalAlpha = ft.life;
+                ctx.fillStyle = ft.color;
+                ctx.shadowColor = 'black'; ctx.shadowBlur = 8;
+                ctx.font = 'bold 45px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText(ft.text, ft.x, ft.y);
+                ctx.shadowBlur = 0;
+                ft.y += ft.vy;
+                ft.life -= 0.025;
+                if(ft.life <= 0) floatingTexts.splice(i, 1);
+            }
+            ctx.restore();
+
+            ctx.restore();
+        }
+
+        function gameLoop() {
+            if (!isGameRunning) return;
+            const now = Date.now(); const dt = now - lastTime; lastTime = now;
+            const lvlData = levelConfig[currentLevel]; const path = lvlData.path;
+
+            manageEnemySpawns(dt);
+
+            const camSpeed = 35; 
+            if (camMove.up) camera.y -= camSpeed; if (camMove.down) camera.y += camSpeed;
+            if (camMove.left) camera.x -= camSpeed; if (camMove.right) camera.x += camSpeed;
+            
+            const viewWidth = canvas.width / CAMERA_ZOOM; const viewHeight = canvas.height / CAMERA_ZOOM;
+            const margin = 1500; 
+            let maxCamX = Math.max(-margin, WORLD_WIDTH + margin - viewWidth); let maxCamY = Math.max(-margin, WORLD_HEIGHT + margin - viewHeight);
+            camera.x = Math.max(-margin, Math.min(camera.x, maxCamX)); camera.y = Math.max(-margin, Math.min(camera.y, maxCamY));
+
+            let potentialEnemies = [...enemies, ...enemyArchers.filter(ea => !ea.isDead)];
+
+            // آپدیت کمانداران دشمن (شلیک به مدافعان بدون در نظر گرفتن وضعیت مخفی شدن)
+            enemyArchers.forEach(ea => {
+                if (ea.isDead) {
+                    ea.respawnTimer -= dt;
+                    if (ea.respawnTimer <= 0) { 
+                        ea.isDead = false; ea.hp = ea.maxHp; 
+                        createParticles(ea.x, ea.y, '#ff0000'); 
+                    }
+                    return;
+                }
+                let closestDef = null, minD = ea.range;
+                defenders.forEach(d => {
+                    // کماندار دشمن بدون بررسی زمان (غیب بودن)، کمانداران مخفی را می‌بیند
+                    let dist = Math.hypot(d.x - ea.x, d.y - ea.y);
+                    if (dist <= minD) { minD = dist; closestDef = d; }
+                });
+                if (closestDef && now - ea.lastAttack >= ea.cooldown) {
+                    let angle = Math.atan2(closestDef.y - ea.y, closestDef.x - ea.x);
+                    projectiles.push({ x: ea.x, y: ea.y, vx: Math.cos(angle)*25, vy: Math.sin(angle)*25, target: closestDef, speed: 25, damage: ea.damage, emoji: '☄️', isPlayer: false });
+                    ea.lastAttack = now;
+                    playSoundEx('archerShoot');
+                }
+            });
+
+            if (!isPrepPhase && now - playerCastleLastShot >= 800) {
+                const pCastle = path[path.length - 1]; let closestEnemy = null, minE_Dist = 500;
+                potentialEnemies.forEach(e => { let d = Math.hypot(e.x - pCastle.x, e.y - pCastle.y); if(d <= minE_Dist) { minE_Dist = d; closestEnemy = e; }});
+                if (closestEnemy) {
+                    let angle = Math.atan2(closestEnemy.y - pCastle.y, closestEnemy.x - pCastle.x);
+                    projectiles.push({ x: pCastle.x, y: pCastle.y, vx: Math.cos(angle)*25, vy: Math.sin(angle)*25, target: closestEnemy, speed: 25, damage: 20, emoji: '⚡', isPlayer: true });
+                    playerCastleLastShot = now; playSoundEx('castle');
+                    flashEffects.push({x: pCastle.x, y: pCastle.y, life: 1.0, color: '#00f2fe'});
+                }
+            }
+
+            if (!isPrepPhase && now - darkCastleData.lastShot >= 800) {
+                let closestDefender = null, minD_Dist = 500;
+                defenders.forEach(d => { 
+                    if (d.emoji === '🏹') {
+                        let elapsed = (Date.now() - d.spawnTime) % 10000;
+                        if (elapsed >= 5000) return;
+                    }
+                    let dist = Math.hypot(d.x - darkCastleData.x, d.y - darkCastleData.y); 
+                    if(dist <= minD_Dist) { minD_Dist = dist; closestDefender = d; }
+                });
+                if (closestDefender) {
+                    let angle = Math.atan2(closestDefender.y - darkCastleData.y, closestDefender.x - darkCastleData.x);
+                    projectiles.push({ x: darkCastleData.x, y: darkCastleData.y, vx: Math.cos(angle)*25, vy: Math.sin(angle)*25, target: closestDefender, speed: 25, damage: 25, emoji: '🔥', isPlayer: false });
+                    darkCastleData.lastShot = now; playSoundEx('castle');
+                    flashEffects.push({x: darkCastleData.x, y: darkCastleData.y, life: 1.0, color: '#ff007f'});
+                }
+            }
+
+            towers.forEach(tower => {
+                if(now - tower.lastShotTime >= tower.type.cooldown) {
+                    let target = null, minDist = tower.type.range;
+                    potentialEnemies.forEach(enemy => { let d = Math.hypot(enemy.x - tower.x, enemy.y - tower.y); if(d <= minDist) { minDist = d; target = enemy; }});
+                    if (!target && Math.hypot(darkCastleData.x - tower.x, darkCastleData.y - tower.y) <= tower.type.range + 80) target = darkCastleData;
+                    if(target) {
+                        let angle = Math.atan2(target.y - tower.y, target.x - tower.x);
+                        projectiles.push({ x: tower.x, y: tower.y, vx: Math.cos(angle)*25, vy: Math.sin(angle)*25, target: target, speed: 25, damage: tower.type.damage, emoji: tower.type.pEmoji, isPlayer: true });
+                        playSoundEx(tower.type.soundKey); tower.lastShotTime = now;
+                    }
+                }
+            });
+
+            for (let i = defenders.length - 1; i >= 0; i--) {
+                let d = defenders[i]; let targetNode = path[d.targetIndex]; let targetX = targetNode.x + d.offsetX; let targetY = targetNode.y + d.offsetY;
+                let distToNode = Math.hypot(targetX - d.x, targetY - d.y);
+                let closestEnemy = null, minE_Dist = Infinity;
+                potentialEnemies.forEach(e => { let dist = Math.hypot(e.x - d.x, e.y - d.y); if(dist < minE_Dist) { minE_Dist = dist; closestEnemy = e; }});
+
+                let isAttacking = false;
+                if(closestEnemy && minE_Dist <= d.range) {
+                    isAttacking = true;
+                    if(now - d.lastAttack >= d.cooldown) {
+                        if(d.type === 'melee') { 
+                            closestEnemy.hp -= d.damage; 
+                            createFloatingText(closestEnemy.x, closestEnemy.y, `-${d.damage}`, '#fff');
+                            if (d.emoji === '🤺') { playSoundEx('swordsmanFight'); } else { playSound('sword'); }
+                            
+                            // نابودی کماندار دشمن در صورت پایان یافتن جان
+                            if (closestEnemy.isEnemyArcher && closestEnemy.hp <= 0 && !closestEnemy.isDead) {
+                                closestEnemy.isDead = true; closestEnemy.hp = 0; closestEnemy.respawnTimer = 20000;
+                                createParticles(closestEnemy.x, closestEnemy.y, '#ff0000');
+                            }
+                        } else { 
+                            let angle = Math.atan2(closestEnemy.y - d.y, closestEnemy.x - d.x);
+                            projectiles.push({ x: d.x, y: d.y, vx: Math.cos(angle)*25, vy: Math.sin(angle)*25, target: closestEnemy, speed: 25, damage: d.damage, emoji: d.pEmoji, isPlayer: true }); 
+                            if (d.emoji === '🏹') { playSoundEx('archerShoot'); } else { playSoundEx('soldier'); }
+                        }
+                        d.lastAttack = now;
+                    }
+                }
+
+                if (!isAttacking && Math.hypot(d.x - darkCastleData.x, d.y - darkCastleData.y) <= d.range + 80) {
+                    isAttacking = true;
+                    if (now - d.lastAttack >= d.cooldown) {
+                        if(d.type === 'melee') { 
+                            darkCastleData.hp -= d.damage; 
+                            createFloatingText(darkCastleData.x, darkCastleData.y, `-${d.damage}`, '#ff007f');
+                            if (d.emoji === '🤺') { playSoundEx('swordsmanFight'); } else { playSound('sword'); }
+                        } else { 
+                            let angle = Math.atan2(darkCastleData.y - d.y, darkCastleData.x - d.x);
+                            projectiles.push({ x: d.x, y: d.y, vx: Math.cos(angle)*25, vy: Math.sin(angle)*25, target: darkCastleData, speed: 25, damage: d.damage, emoji: d.pEmoji, isPlayer: true }); 
+                            if (d.emoji === '🏹') { playSoundEx('archerShoot'); } else { playSoundEx('soldier'); }
+                        }
+                        d.lastAttack = now;
+                        if (darkCastleData.hp <= 0) { playSoundEx('castleExplode'); endGame(true); return; }
+                    }
+                }
+
+                if(!isAttacking) {
+                    if (distToNode < d.speed) { d.x = targetX; d.y = targetY; d.targetIndex--; if (d.targetIndex < 0) d.targetIndex = 0; } 
+                    else { d.x += ((targetX - d.x) / distToNode) * d.speed; d.y += ((targetY - d.y) / distToNode) * d.speed; }
+                }
+
+                if(d.hp <= 0) { createParticles(d.x, d.y, '#00f2fe'); defenders.splice(i, 1); }
+            }
+
+            for (let i = enemies.length - 1; i >= 0; i--) {
+                let e = enemies[i]; let closestDefender = null, minD_Dist = Infinity;
+                defenders.forEach(d => { 
+                    if(d.type === 'melee') { 
+                        let dist = Math.hypot(e.x - d.x, e.y - d.y); 
+                        if(dist < minD_Dist) { minD_Dist = dist; closestDefender = d; }
+                    } else if (d.emoji === '🏹') {
+                        let elapsed = (Date.now() - d.spawnTime) % 10000;
+                        if (elapsed < 5000) { 
+                            let dist = Math.hypot(e.x - d.x, e.y - d.y);
+                            if(dist < minD_Dist) { minD_Dist = dist; closestDefender = d; }
+                        }
+                    }
+                });
+
+                e.isBlocked = false;
+                if(closestDefender && minD_Dist <= 90) {
+                    e.isBlocked = true;
+                    if(now - e.lastAttack >= 1500) { 
+                        closestDefender.hp -= e.damage; 
+                        createFloatingText(closestDefender.x, closestDefender.y, `-${e.damage}`, '#ff4757');
+                        playSound('hit'); e.lastAttack = now; 
+                    }
+                }
+
+                if(!e.isBlocked) {
+                    let target = path[e.targetIndex]; let targetX = target.x + e.offsetX; let targetY = target.y + e.offsetY;
+                    let dist = Math.hypot(targetX - e.x, targetY - e.y);
+                    if (dist < e.speed) {
+                        e.x = targetX; e.y = targetY; e.targetIndex++;
+                        if (e.targetIndex >= path.length) {
+                            castleHp -= e.damage; screenShake = 8; updateUI(); 
+                            createFloatingText(e.x, e.y, `-${e.damage}`, '#ff4757');
+                            createParticles(e.x, e.y, '#ff007f'); enemies.splice(i, 1);
+                            if(castleHp <= 0) { playSoundEx('castleExplode'); endGame(false); return; } continue;
+                        }
+                    } else { e.x += ((targetX - e.x) / dist) * e.speed; e.y += ((targetY - e.y) / dist) * e.speed; }
+                }
+                
+                if(e.hp <= 0) {
+                    if(e.rewardCoins > 0) { 
+                        coins += e.rewardCoins; 
+                        updateUI(); 
+                        createFloatingText(e.x, e.y - 40, `+${e.rewardCoins}🪙`, '#f1c40f');
+                    }
+                    createParticles(e.x, e.y, '#ff007f'); enemies.splice(i, 1);
+                }
+            }
+
+            for (let i = projectiles.length - 1; i >= 0; i--) {
+                let p = projectiles[i];
+
+                if (p.target.isEnemyArcher && p.target.isDead) {
+                    projectiles.splice(i, 1);
+                    continue;
+                }
+
+                let dist = Math.hypot(p.target.x - p.x, p.target.y - p.y);
+                
+                if (!p.isPlayer && p.target.emoji === '🏹' && p.emoji !== '☄️') {
+                    let elapsed = (Date.now() - p.target.spawnTime) % 10000;
+                    if (elapsed >= 5000) {
+                        projectiles.splice(i, 1);
+                        continue;
+                    }
+                }
+
+                if (dist < p.speed) { 
+                    p.target.hp -= p.damage; playSound('hit'); 
+                    createFloatingText(p.target.x, p.target.y, `-${p.damage}`, p.isPlayer ? '#fff' : '#ff4757');
+                    createParticles(p.x, p.y, p.emoji === '🚀' ? '#ff007f' : '#00f2fe');
+                    
+                    if (p.target.isEnemyArcher && p.target.hp <= 0 && !p.target.isDead) {
+                        p.target.isDead = true;
+                        p.target.hp = 0;
+                        p.target.respawnTimer = 20000;
+                        createParticles(p.target.x, p.target.y, '#ff0000');
+                    } else if (p.target.isDarkCastle && p.target.hp <= 0) { 
+                        playSoundEx('castleExplode'); endGame(true); return; 
+                    }
+                    
+                    projectiles.splice(i, 1); 
+                } 
+                else { 
+                    let angle = Math.atan2(p.target.y - p.y, p.target.x - p.x);
+                    p.vx = Math.cos(angle)*p.speed; p.vy = Math.sin(angle)*p.speed;
+                    p.x += p.vx; p.y += p.vy; 
+                }
+            }
+
+            drawFrame(dt);
+            if(isGameRunning) requestAnimationFrame(gameLoop);
+        }
+
+        function endGame(isWin) {
+            isGameRunning = false; if(window.timerInterval) clearInterval(window.timerInterval);
+            const msgBox = document.getElementById('end-message'); const title = document.getElementById('end-title');
+            msgBox.style.display = 'block';
+            
+            if(!hasCustomMusic) {
+                bgMusic.src = defaultMenuMusic;
+                if(!isMuted) bgMusic.play().catch(e => {});
+            }
+
+            if (isWin) {
+                title.innerText = "پیروزی باشکوه! 🎉"; title.style.color = "var(--success)";
+                document.getElementById('end-desc').innerText = `آفرین ${playerName}، تو توانستی با استراتژی قدرتمند خود، قلعه تاریکی را در نبرد حماسی ${levelConfig[currentLevel].name} نابود کنی!`;
+            } else {
+                title.innerText = "شکست خوردی! 💥"; title.style.color = "var(--danger)";
+                document.getElementById('end-desc').innerText = `افسوس! قلعه‌ات سقوط کرد. فرمانده، باید یک هرم دفاعی مستحکم‌تر برای نبرد بعدی بچینی!`;
+            }
+        }
+
+        function returnToMenu() {
+            document.getElementById('end-message').style.display = 'none'; 
+            document.getElementById('game-screen').style.display = 'none'; 
+            showLevelScreen();
+        }
+    </script>
+</body>
+</html>
